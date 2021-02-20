@@ -18,8 +18,17 @@ ActiveRecord::Schema.define(version: 2021_02_20_134706) do
   create_table "categories", force: :cascade do |t|
     t.string "name"
     t.string "url"
+    t.integer "parent_id"
+    t.integer "lft"
+    t.integer "rgt"
+    t.integer "depth", default: 0, null: false
+    t.integer "children_count", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["lft"], name: "index_categories_on_lft"
+    t.index ["parent_id"], name: "index_categories_on_parent_id"
+    t.index ["rgt"], name: "index_categories_on_rgt"
+    t.index ["url"], name: "index_categories_on_url"
   end
 
   create_table "categories_products", id: false, force: :cascade do |t|
@@ -35,6 +44,7 @@ ActiveRecord::Schema.define(version: 2021_02_20_134706) do
     t.integer "price"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["url"], name: "index_products_on_url"
   end
 
 end
