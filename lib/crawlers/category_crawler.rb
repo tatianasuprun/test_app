@@ -1,5 +1,6 @@
 class CategoryCrawler < Mechanize
   HOMEPAGE_URL = 'https://www.tohome.com/index.aspx'.freeze
+  SMARTPHONES_URL = 'https://www.tohome.com/catalog/532/Smartphones-Tablets'.freeze
   CATEGORIES_SELECTOR = 'ul#leftnav > li'.freeze
 
   def initialize(*args)
@@ -13,10 +14,20 @@ class CategoryCrawler < Mechanize
       subcategories = li.css('ul > li')
       category = Category.create({ name: category_content.children.first.to_s, url: category_content['href'] })
       add_subcategories(category, subcategories)
+
+      correct_smartphones_link
     end
   end
 
   private
+
+  def correct_smartphones_link
+    smartphones = Category.find_by_name('Smartphones l Tablets')
+    unless smartphones.nil?
+      smartphones.url = SMARTPHONES_URL
+      smartphones.save
+    end
+  end
 
   def add_subcategories(category, subcategories)
     previous_parent = nil
