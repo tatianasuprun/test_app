@@ -12,6 +12,6 @@ namespace :crawl do
   task products: :environment do
     agent = ProductCrawler.new
 
-    agent.pagination
+    agent.run
   end
 end
