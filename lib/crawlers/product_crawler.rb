@@ -49,12 +49,12 @@ class ProductCrawler < Mechanize
       product_price = div.css('div.prdInfo > span.prdPrice-new').first.children.first.text
       product_url = a['href']
       category = Category.find_by_url(CATEGORY_PRODUCTS_URL)
-      begin
-        current_product = Product.create({ name: product_name, url: product_url, price: product_price })
-      ensure
-        current_product = Product.find_by_url(product_url)
-      end
+      current_product = Product.find_or_initialize_by(url: product_url)
+      current_product.name = product_name
+      current_product.price = product_price
+      current_product.save
       category.products << current_product unless category.products.include?(current_product)
+  
     end
   end
 
