@@ -2,6 +2,9 @@ class ProductCrawler < Mechanize
   HOMEPAGE_URL = 'https://www.tohome.com'.freeze
   CATALOG_PAGES_SELECTOR = 'div.CatalogPageLink > span#lblPageLink'.freeze
   ITEMS_SELECTOR = 'div#list > header > div.pageNo > span#lblCount'.freeze
+  PRODUCTS_SELECTOR = 'span#lblProductDesc > div.mainbox'.freeze
+  PRODUCT_NAME_SELECTOR = 'div.prdInfo > h2.prdTitle'.freeze
+  PRODUCT_PRICE_SELECTOR = 'div.prdInfo > span.prdPrice-new'.freeze
 
   def initialize(*args)
     super(args)
@@ -20,18 +23,19 @@ class ProductCrawler < Mechanize
     puts category_link
 
     pages_selector = document.css(CATALOG_PAGES_SELECTOR).first
-    puts 'next' if pages_selector.nil?
-    unless pages_selector.nil?
+    if pages_selector.nil?
+      puts 'next'
+    else
       pages_selector_content = pages_selector.children
       category = Category.find_by_url(category_link)
-      page_products(document, category)
+      get_products(document, category)
       unless pages_selector_content.empty?
-        for i in 1..(page_number(document) - 1)
+        (1..(page_number(document) - 1)).each do
           pages_selector = document.css(CATALOG_PAGES_SELECTOR).first
           pages_selector_content = pages_selector.children.last
           next_page_link = pages_selector_content['href']
           document = page_document(next_page_link)
-          page_products(document, category)
+          get_products(document, category)
         end
       end
     end
@@ -40,12 +44,8 @@ class ProductCrawler < Mechanize
   private
 
   def items_number(items)
-    after_needed = items.index(' items')
-    l = items.size
-    items.slice!(after_needed, l - 1)
-    before_needed = items.index('of ')
-    items.slice!(0, before_needed + 3)
-    items.to_i
+    # example: 1 - 30 of 886 items found
+    items.split(' ')[4].to_i
   end
 
   def price(price_string)
@@ -58,26 +58,31 @@ class ProductCrawler < Mechanize
     total_items / 30 + (total_items % 30 ? 1 : 0)
   end
 
-  def page_products(document, category)
-    document.css('span#lblProductDesc > div.mainbox').each do |div|
-      a = div.css('a').first
-      product_name = div.css('div.prdInfo > h2.prdTitle').first.children.first.text
-      product_price_string = div.css('div.prdInfo > span.prdPrice-new').first.children.first.text
-      product_price = price(product_price_string)
-      product_url = a['href']
-      add_product(product_name, product_price, product_url, category)
+  def get_products(document, category)
+    document.css(PRODUCTS_SELECTOR).each do |div|
+      create_or_update_product(product_name(div), product_price(div), product_url(div), category)
     end
   end
 
-  def add_product(product_name, product_price, product_url, category)
+  def product_name(div)
+    div.css(PRODUCT_NAME_SELECTOR).first.children.first.text
+  end
+
+  def product_price(div)
+    price(div.css(PRODUCT_PRICE_SELECTOR).first.children.first.text)
+  end
+
+  def product_url(div)
+    div.css('a').first['href']
+  end
+
+  def create_or_update_product(product_name, product_price, product_url, category)
     current_product = Product.find_or_initialize_by(url: product_url)
     current_product.name = product_name
     current_product.price = product_price
     current_product.save
 
-    if !category.nil? && !category.products.include?(current_product)
-      category.products << current_product
-    end
+    category.products << current_product if !category.nil? && !category.products.include?(current_product)
   end
 
   def page_document(category_link)
