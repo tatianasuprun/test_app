@@ -45,7 +45,14 @@ class ProductCrawler < Mechanize
 
   def items_number(items)
     # example: 1 - 30 of 886 items found
+    # returns 886
     items.split(' ')[4].to_i
+  end
+
+  def items_per_page_number(items)
+    # example: 1 - 30 of 886 items found
+    # returns 30
+    items.split(' ')[2].to_i
   end
 
   def price(price_string)
@@ -55,7 +62,7 @@ class ProductCrawler < Mechanize
   def page_number(document)
     items_info = document.css(ITEMS_SELECTOR).first.children.first.text
     total_items = items_number(items_info)
-    total_items / 30 + (total_items % 30 ? 1 : 0)
+    total_items / items_per_page_number(items_info) + (total_items % items_per_page_number(items_info) ? 1 : 0)
   end
 
   def get_products(document, category)
