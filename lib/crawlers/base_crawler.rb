@@ -1,5 +1,6 @@
 class BaseCrawler < Mechanize
   def initialize(*args)
+    @logger = Logger.new(STDOUT)
     super(args)
     set_cookies
   end
