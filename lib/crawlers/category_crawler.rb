@@ -8,7 +8,8 @@ class CategoryCrawler < BaseCrawler
     document.css(CATEGORIES_SELECTOR).each do |li|
       category_content = li.css('a').first
       subcategories = li.css('ul > li')
-      category = Category.create({ name: category_content.children.first.to_s, url: category_content['href'] })
+      category = Category.create({ name: category_content.children.first.to_s,
+                                   url: sanitize_query_string(category_content['href']) })
       add_subcategories(category, subcategories)
 
       correct_smartphones_link
@@ -31,11 +32,21 @@ class CategoryCrawler < BaseCrawler
       subcat_content = subcat.children.first
       subcat_text = subcat_content.children.first.to_s
       if subcat_content['class'] == 'subject'
-        previous_parent = category.children.create({ name: subcat_text, url: subcat_content['href'] })
+        previous_parent = category.children.create({ name: subcat_text, url: sanitize_query_string(subcat_content['href']) })
       elsif subcat_content.name == 'a'
-        previous_parent.children.create({ name: subcat_text, url: subcat_content['href'] })
+        previous_parent.children.create({ name: subcat_text, url: sanitize_query_string(subcat_content['href']) })
       end
     end
+  end
+
+  def sanitize_query_string(url)
+    uri = URI.parse(url)
+
+    query = Rack::Utils.parse_query(uri.query)
+    query.except!('page')
+
+    uri.query = Rack::Utils.build_query(query)
+    uri.to_s
   end
 
   def document
