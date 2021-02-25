@@ -1,12 +1,8 @@
-class CategoryCrawler < Mechanize
+require_relative '../crawlers/base_crawler'
+class CategoryCrawler < BaseCrawler
   HOMEPAGE_URL = 'https://www.tohome.com/index.aspx'.freeze
   SMARTPHONES_URL = 'https://www.tohome.com/catalog/532/Smartphones-Tablets'.freeze
   CATEGORIES_SELECTOR = 'ul#leftnav > li'.freeze
-
-  def initialize(*args)
-    super(args)
-    set_cookies
-  end
 
   def run
     document.css(CATEGORIES_SELECTOR).each do |li|
@@ -47,12 +43,5 @@ class CategoryCrawler < Mechanize
     Nokogiri::HTML(page.body)
   rescue StandardError => e
     abort("Error occured: #{e.message}")
-  end
-
-  def set_cookies
-    cookie = Mechanize::Cookie.new('langCookie', 'langCookie=en-us')
-    cookie.domain = '.tohome.com'
-    cookie.path = '/'
-    cookie_jar << cookie
   end
 end

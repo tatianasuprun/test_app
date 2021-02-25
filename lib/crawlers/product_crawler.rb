@@ -1,15 +1,11 @@
-class ProductCrawler < Mechanize
+require_relative '../crawlers/base_crawler'
+class ProductCrawler < BaseCrawler
   HOMEPAGE_URL = 'https://www.tohome.com'.freeze
   CATALOG_PAGES_SELECTOR = 'div.CatalogPageLink > span#lblPageLink'.freeze
   ITEMS_SELECTOR = 'div#list > header > div.pageNo > span#lblCount'.freeze
   PRODUCTS_SELECTOR = 'span#lblProductDesc > div.mainbox'.freeze
   PRODUCT_NAME_SELECTOR = 'div.prdInfo > h2.prdTitle'.freeze
   PRODUCT_PRICE_SELECTOR = 'div.prdInfo > span.prdPrice-new'.freeze
-
-  def initialize(*args)
-    super(args)
-    set_cookies
-  end
 
   def run
     categories = Category.all
@@ -97,12 +93,5 @@ class ProductCrawler < Mechanize
     Nokogiri::HTML(page.body)
   rescue StandardError => e
     abort("Error occured: #{e.message}")
-  end
-
-  def set_cookies
-    cookie = Mechanize::Cookie.new('langCookie', 'langCookie=en-us')
-    cookie.domain = '.tohome.com'
-    cookie.path = '/'
-    cookie_jar << cookie
   end
 end
