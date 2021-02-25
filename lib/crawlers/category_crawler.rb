@@ -11,9 +11,8 @@ class CategoryCrawler < BaseCrawler
       category = Category.create({ name: category_content.children.first.to_s,
                                    url: sanitize_query_string(category_content['href']) })
       add_subcategories(category, subcategories)
-
-      correct_smartphones_link
     end
+    correct_smartphones_link
   end
 
   private
